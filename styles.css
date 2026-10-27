@@ -1,0 +1,214 @@
+/* 
+ * EV Smart Cockpit — Tối ưu hóa cho màn hình xe điện 12 inch (VF 7)
+ * Đồng hồ & Lịch Âm Dương cỡ lớn • Thời tiết & Báo thức tinh gọn
+ */
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  height: 100%;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden !important;
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #f1f5f9;
+  color: #0f172a;
+  user-select: none;
+}
+
+/* HỆ THỐNG 3 TRANG CỐ ĐỊNH KHUNG NHÌN 100% */
+.swipe-viewport {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden !important;
+  position: relative;
+  touch-action: pan-y;
+}
+
+.swipe-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden !important;
+}
+
+.swipe-page {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: clamp(8px, 1.2dvh, 14px) clamp(10px, 1.4vw, 18px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 1;
+  transform: translateX(24px);
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.25s;
+}
+
+.swipe-page.active-page {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  z-index: 10;
+  transform: translateX(0);
+}
+
+/* THẺ GIAO DIỆN SÁNG SỦA, ĐỔ BÓNG NHẸ, BO GÓC MỀM MẠI */
+.soft-card {
+  background: #ffffff;
+  border: 1px solid rgba(203, 213, 225, 0.85);
+  border-radius: 22px;
+  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ĐỒNG HỒ SIÊU LỚN CHO MÀN HÌNH 12 INCH */
+.giant-clock-num {
+  font-size: clamp(54px, 6.2vw, 88px);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.giant-clock-sec {
+  font-size: clamp(26px, 2.8vw, 42px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* TRẠNG THÁI (STATUS BADGES) TÔ MÀU NỔI BẬT */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.badge-success {
+  background-color: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.badge-pending {
+  background-color: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.badge-error {
+  background-color: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+}
+
+.badge-info {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-pulse {
+  animation: pulseDot 1.6s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.35); opacity: 0.55; }
+}
+
+/* Ô LỊCH ÂM DƯƠNG CỠ LỚN DỄ NHÌN TRÊN MÀN HÌNH XE 12 INCH */
+.cal-day-cell {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: clamp(5px, 0.7dvh, 9px) clamp(6px, 0.7vw, 10px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  min-height: clamp(48px, 6.6dvh, 72px);
+  min-width: 0;
+  transition: all 0.15s ease;
+}
+
+.cal-day-cell:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.cal-day-cell.is-today {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 2px solid #2563eb;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.18);
+}
+
+.cal-day-cell.is-selected {
+  outline: 2.5px solid #f59e0b;
+  background: #fffbeb;
+}
+
+.cal-day-cell.is-muted {
+  opacity: 0.35;
+  background: transparent;
+}
+
+/* THANH TRƯỢT RANGE HIỆN ĐẠI */
+input[type="range"] {
+  accent-color: #2563eb;
+  height: 6px;
+  border-radius: 99px;
+  cursor: pointer;
+}
+
+/* THANH CUỘN TINH GỌN */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 99px;
+}
+
+/* MODAL CẢNH BÁO ĐẾN GIỜ RÚT SẠC */
+.alarm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(10px);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.alarm-overlay.show {
+  display: flex;
+}

@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>EV Smart Cockpit — Tối Ưu Màn Hình 12 Inch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="flex flex-col h-dvh w-screen overflow-hidden bg-[#f1f5f9] text-slate-800">
+
+  <!-- TOP NAVIGATION & STATUS BAR (Gọn gàng, nút bấm lớn dễ chạm trên màn 12 inch) -->
+  <header class="bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-2 flex items-center justify-between gap-3 shrink-0 z-30 shadow-xs">
+    <!-- Left: Brand + Live GPS Status -->
+    <div class="flex items-center gap-2.5 min-w-0">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow-sm shrink-0">
+        <i data-lucide="car-front" class="w-5 h-5"></i>
+      </div>
+      <div class="flex items-center gap-2 min-w-0">
+        <h1 class="font-extrabold text-sm sm:text-base text-slate-900 tracking-tight truncate">EV Cockpit</h1>
+        <span id="gpsTopBadge" class="badge-status badge-success">
+          <span class="status-dot bg-emerald-500 dot-pulse"></span>
+          <span id="gpsTopBadgeText" class="truncate max-w-[180px] sm:max-w-[260px]">GPS Trực tuyến</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Center: 3-Page Pill Switcher (Chữ to rõ dễ chạm) -->
+    <nav class="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200/90 shrink-0">
+      <button onclick="App.goToPage(0)" id="navBtn-0" class="page-tab-btn flex items-center gap-2 px-4 sm:px-5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-white text-blue-600 shadow-xs">
+        <i data-lucide="calendar-clock" class="w-4 h-4"></i>
+        <span>1. Lịch • Đồng Hồ • Sạc</span>
+      </button>
+      <button onclick="App.goToPage(1)" id="navBtn-1" class="page-tab-btn flex items-center gap-2 px-4 sm:px-5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 transition-all">
+        <i data-lucide="youtube" class="w-4 h-4 text-rose-500"></i>
+        <span>2. YouTube Sạch</span>
+      </button>
+      <button onclick="App.goToPage(2)" id="navBtn-2" class="page-tab-btn flex items-center gap-2 px-4 sm:px-5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 transition-all">
+        <i data-lucide="tv" class="w-4 h-4 text-indigo-500"></i>
+        <span>3. Truyền Hình VTV</span>
+      </button>
+    </nav>
+
+    <!-- Right: Charging Status Pill + Mini Clock + Fullscreen -->
+    <div class="flex items-center gap-2 shrink-0">
+      <button onclick="App.goToPage(0)" id="topChargeStatusBadge" class="badge-status badge-info cursor-pointer hover:opacity-90 transition hidden md:inline-flex">
+        <span class="status-dot bg-blue-500" id="topChargeDot"></span>
+        <span id="topChargeText">Sẵn sàng sạc</span>
+      </button>
+
+      <div class="bg-slate-100 border border-slate-200 px-3 py-1 rounded-xl font-mono font-extrabold text-sm sm:text-base text-slate-800" id="topClock">
+        00:00:00
+      </div>
+
+      <button onclick="App.toggleFullScreen()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center justify-center text-slate-700 transition" title="Toàn màn hình">
+        <i data-lucide="maximize-2" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- 3-PAGE HORIZONTAL SWIPE VIEWPORT -->
+  <div class="swipe-viewport" id="swipeViewport">
+    <div class="swipe-track" id="swipeTrack">
+
+      <!-- ===================================================================
+           TRANG 1: ĐỒNG HỒ & LỊCH ÂM DƯƠNG CỠ ĐẠI (3/4 MÀN HÌNH) • THỜI TIẾT & BÁO THỨC DỌC (1/4 MÀN HÌNH)
+           =================================================================== -->
+      <section class="swipe-page active-page" id="page-0">
+        <div class="w-full h-full grid grid-cols-1 lg:grid-cols-12 gap-3.5 min-h-0">
+
+          <!-- ===============================================================
+               CỘT TRÁI SIÊU LỚN (9/12 = 3/4 MÀN HÌNH): ĐỒNG HỒ SIÊU TO & LỊCH ÂM DƯƠNG LỚN
+               =============================================================== -->
+          <div class="lg:col-span-9 flex flex-col gap-3.5 min-h-0">
+
+            <!-- KHỐI ĐỒNG HỒ SIÊU LỚN + NGÀY ÂM DƯƠNG HÔM NAY -->
+            <div class="soft-card px-6 py-4 bg-gradient-to-br from-white via-white to-blue-50/60 shrink-0">
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+
+                <!-- Bên trái (7/12): Giờ Phút Giây Siêu To + Thứ Ngày Tháng Dương -->
+                <div class="sm:col-span-7 flex flex-col justify-center">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span id="greetingBadge" class="badge-status badge-info">
+                      <span class="status-dot bg-blue-500"></span>
+                      <span>Chào buổi sáng</span>
+                    </span>
+                  </div>
+
+                  <div class="flex items-baseline gap-1.5 my-1">
+                    <span id="heroHM" class="giant-clock-num font-extrabold text-slate-900 font-mono">00:00</span>
+                    <span id="heroSec" class="giant-clock-sec font-extrabold text-blue-600 font-mono">:00</span>
+                  </div>
+
+                  <div id="heroSolarDate" class="text-lg sm:text-2xl font-extrabold text-slate-700 mt-1">
+                    Thứ Tư, 28 Tháng 10, 2026
+                  </div>
+                </div>
+
+                <!-- Bên phải (5/12): Khung Lịch Âm Hôm Nay Cỡ Lớn Nổi Bật -->
+                <div class="sm:col-span-5 bg-amber-50/90 border-2 border-amber-200/90 rounded-2xl p-4 flex flex-col justify-between shadow-xs">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs sm:text-sm font-extrabold text-amber-800 uppercase tracking-wider flex items-center gap-1">
+                      <i data-lucide="moon" class="w-4 h-4 text-amber-600"></i>
+                      <span>Âm Lịch Hôm Nay</span>
+                    </span>
+                    <span id="dashTietKhi" class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs">
+                      Tiết khí: --
+                    </span>
+                  </div>
+
+                  <div class="flex items-center justify-between my-2">
+                    <div id="dashLunarDate" class="text-4xl sm:text-6xl font-extrabold text-amber-600 tracking-tight font-mono">
+                      --/--
+                    </div>
+                    <div id="dashCanChi" class="text-xs sm:text-sm text-slate-700 text-right leading-relaxed font-semibold">
+                      Năm --<br/>Tháng --<br/>Ngày --
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- KHỐI BẢNG LỊCH THÁNG ÂM DƯƠNG CỠ LỚN (Chiếm trọn phần còn lại của 3/4 màn hình) -->
+            <div class="soft-card px-6 py-4 flex-1 flex flex-col min-h-0">
+              <!-- Thanh tiêu đề tháng + Chi tiết ngày đang chọn nằm chung 1 hàng gọn -->
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3 shrink-0">
+                <div class="flex items-center gap-2">
+                  <button onclick="App.changeCalendarMonth(-1)" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-800 font-bold transition">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                  </button>
+                  <span id="calMonthHeaderTitle" class="font-extrabold text-lg sm:text-2xl text-slate-900 px-3">
+                    Tháng 10 / 2026
+                  </span>
+                  <button onclick="App.changeCalendarMonth(1)" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-800 font-bold transition">
+                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                  </button>
+                  <button onclick="App.goToTodayCalendar()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-xs transition">
+                    Hôm nay
+                  </button>
+                </div>
+
+                <!-- Thông tin ngày đang chạm chọn -->
+                <div class="flex items-center gap-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl">
+                  <span id="calDetailSelectedTitle" class="font-bold text-slate-800">📅 --</span>
+                  <span class="text-slate-300">|</span>
+                  <span id="calDetailSelectedLunar" class="font-extrabold text-amber-600">🌕 --</span>
+                </div>
+              </div>
+
+              <!-- Hàng Thứ trong tuần cỡ lớn -->
+              <div class="grid grid-cols-7 gap-2.5 text-center text-xs sm:text-sm font-extrabold text-slate-500 mb-2 shrink-0">
+                <div>THỨ 2</div><div>THỨ 3</div><div>THỨ 4</div><div>THỨ 5</div><div>THỨ 6</div>
+                <div class="text-blue-600">THỨ 7</div>
+                <div class="text-rose-600">CHỦ NHẬT</div>
+              </div>
+
+              <!-- Lưới 7 cột ngày Âm Dương chữ TO RÕ -->
+              <div id="calendarGridBody" class="grid grid-cols-7 gap-2.5 flex-1 min-h-0 overflow-y-auto pr-0.5">
+                <!-- Populated by JS -->
+              </div>
+
+              <!-- Dòng Giờ Hoàng Đạo dưới chân lịch -->
+              <div class="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs sm:text-sm text-slate-600 shrink-0">
+                <div id="calDetailGioHD" class="font-bold text-emerald-700 truncate">
+                  ✨ Giờ Hoàng Đạo: --
+                </div>
+                <div class="flex items-center gap-3 text-xs font-bold shrink-0">
+                  <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Mùng 1 / Rằm</span>
+                  <span class="text-amber-600">Số dưới: Âm lịch</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ===============================================================
+               CỘT PHẢI NHỎ GỌN (3/12 = ĐÚNG 1/4 MÀN HÌNH THEO CHIỀU DỌC): THỜI TIẾT & BÁO THỨC
+               =============================================================== -->
+          <div class="lg:col-span-3 flex flex-col gap-3 min-h-0">
+
+            <!-- 1. THẺ THỜI TIẾT THỰC TẾ (GPS) & DỰ BÁO 10 NGÀY (1/4 MÀN HÌNH - ÔM SÁT NỘI DUNG) -->
+            <div class="soft-card p-3 shrink-0 flex flex-col">
+              <!-- Chọn GPS + Nút định vị -->
+              <div class="flex items-center justify-between gap-1.5 mb-2 shrink-0">
+                <select id="dashCitySelect" onchange="App.changeCity(this.value)" class="flex-1 min-w-0 bg-slate-100 border border-slate-200 rounded-xl px-2 py-1 text-xs font-bold text-slate-800 outline-none truncate">
+                  <!-- Populated by JS -->
+                </select>
+                <button onclick="App.detectGPS()" class="p-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition shrink-0" title="Định vị lại GPS">
+                  <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+                </button>
+                <span id="weatherStatusBadge" class="hidden">
+                  <span id="weatherStatusDot"></span>
+                  <span id="weatherStatusText"></span>
+                </span>
+              </div>
+
+              <!-- Hộp Thời Tiết Hiện Tại Siêu Gọn -->
+              <div class="bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-xl p-2.5 shadow-xs mb-2 shrink-0">
+                <div class="text-[11px] font-semibold text-sky-100 truncate" id="dashWeatherCityName">
+                  🛰️ Đang định vị...
+                </div>
+                <div class="flex items-center justify-between my-0.5">
+                  <div class="flex items-baseline gap-1.5">
+                    <span class="text-2xl font-extrabold tracking-tight" id="dashTempNow">--°C</span>
+                    <span class="text-[11px] font-bold text-sky-100" id="dashTempHighLow">C:--° T:--°</span>
+                  </div>
+                  <div class="text-3xl leading-none" id="dashWeatherBigIcon">⛅</div>
+                </div>
+                <div class="text-[11px] text-sky-50 truncate" id="dashWeatherDesc">Đang tải...</div>
+                <div class="flex items-center justify-between text-[10.5px] text-sky-100 font-semibold mt-1.5 pt-1.5 border-t border-white/20">
+                  <span>💧 <b id="dashHumidity" class="text-white">--%</b></span>
+                  <span>💨 <b id="dashWind" class="text-white">--</b></span>
+                  <span>☔ <b id="dashRainProb" class="text-white">--%</b></span>
+                  <span>UV <b id="dashUV" class="text-white">--</b></span>
+                </div>
+              </div>
+
+              <div id="hourlyForecastRow" class="hidden"></div>
+              <span id="weatherCoordHint" class="hidden"></span>
+
+              <!-- Lưới Dự báo 10 ngày dạng Icon ngắn gọn (5 cột x 2 hàng) -->
+              <div class="flex items-center justify-between text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1 shrink-0">
+                <span>Dự báo 10 ngày</span>
+                <span class="text-slate-400 font-semibold normal-case">Thấp/Cao</span>
+              </div>
+              <div id="dashForecast10List" class="grid grid-cols-5 gap-1 content-start">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- 2. THẺ BÁO THỨC & HẸN GIỜ SẠC PIN (MỞ RỘNG CHIỀU CAO LẤP ĐẦY CỘT PHẢI) -->
+            <div class="soft-card p-3.5 flex-1 flex flex-col justify-between min-h-0">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-2">
+                  <div class="flex items-center gap-1.5 font-extrabold text-xs sm:text-sm text-slate-900 truncate">
+                    <i data-lucide="zap" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                    <span class="truncate">Báo Sạc Xe Điện</span>
+                  </div>
+                  <span id="alarmCardStatusBadge" class="badge-status badge-info !py-0.5 !px-2.5 !text-[11px]">
+                    <span class="status-dot bg-blue-500" id="alarmCardStatusDot"></span>
+                    <span id="alarmCardStatusText">Chờ đặt giờ</span>
+                  </span>
+                </div>
+
+                <!-- Đồng hồ đếm ngược to rõ hơn -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 flex items-center justify-between mb-2">
+                  <div id="alarmMainCountdown" class="text-2xl font-extrabold font-mono text-emerald-600 tracking-tight">
+                    00:00:00
+                  </div>
+                  <div id="alarmTargetTimeLabel" class="text-xs font-semibold text-slate-500 truncate max-w-[125px]">
+                    Chưa hẹn giờ
+                  </div>
+                </div>
+
+                <!-- 6 nút hẹn nhanh cao ráo dễ bấm -->
+                <div class="grid grid-cols-6 gap-1.5 mb-2">
+                  <button onclick="App.startQuickAlarm(15)" class="py-2 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-600 font-bold text-xs text-slate-700 transition">15p</button>
+                  <button onclick="App.startQuickAlarm(30)" class="py-2 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-600 font-bold text-xs text-slate-700 transition">30p</button>
+                  <button onclick="App.startQuickAlarm(45)" class="py-2 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-600 font-bold text-xs text-slate-700 transition">45p</button>
+                  <button onclick="App.startQuickAlarm(60)" class="py-2 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-600 font-bold text-xs text-slate-700 transition">60p</button>
+                  <button onclick="App.testAlarmSound()" class="py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition" title="Thử chuông">🔊</button>
+                  <button onclick="App.stopAlarmTimer()" class="py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs transition">Hủy</button>
+                </div>
+
+                <!-- Đặt số phút hoặc giờ cụ thể -->
+                <div class="grid grid-cols-2 gap-1.5 mb-2">
+                  <div class="flex gap-1">
+                    <input type="number" id="customMinutesInput" min="1" max="600" placeholder="Số phút" value="35" class="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs font-bold text-slate-800 outline-none" />
+                    <button onclick="App.startCustomMinuteAlarm()" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shrink-0">Đặt</button>
+                  </div>
+                  <div class="flex gap-1">
+                    <input type="time" id="exactAlarmTimeInput" class="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs font-bold text-slate-800 outline-none" />
+                    <button onclick="App.startExactTimeAlarm()" class="px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shrink-0">Hẹn</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Máy tính % Pin VinFast VF 7 Eco -->
+              <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 space-y-2">
+                <div class="grid grid-cols-2 gap-1.5">
+                  <select id="evModelSelect" onchange="App.onEVModelChange()" class="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-800 outline-none truncate">
+                    <option value="18.64">VF 3 (18.6kWh)</option>
+                    <option value="37.23">VF 5 (37.2kWh)</option>
+                    <option value="59.6">VF 6 (59.6kWh)</option>
+                    <option value="60" selected>VF 7 Eco (60kWh)</option>
+                    <option value="75.3">VF 7 Plus (75kWh)</option>
+                    <option value="82">VF 8 Eco (82kWh)</option>
+                    <option value="87.7">VF 8 Plus (88kWh)</option>
+                    <option value="123">VF 9 (123kWh)</option>
+                  </select>
+                  <select id="chargerPowerSelect" onchange="App.calculateChargingTime()" class="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-800 outline-none truncate">
+                    <option value="7.4">AC 7.4 kW</option>
+                    <option value="11">AC 11 kW</option>
+                    <option value="30">DC 30 kW</option>
+                    <option value="60" selected>DC 60 kW</option>
+                    <option value="120">DC 120 kW</option>
+                    <option value="150">DC 150 kW</option>
+                  </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5 text-xs">
+                  <div>
+                    <div class="flex justify-between font-bold mb-0.5">
+                      <span class="text-slate-500">Pin:</span>
+                      <span id="curSocLabel" class="text-blue-600">25%</span>
+                    </div>
+                    <input type="range" id="curSocInput" min="1" max="95" value="25" oninput="App.calculateChargingTime()" class="w-full" />
+                  </div>
+                  <div>
+                    <div class="flex justify-between font-bold mb-0.5">
+                      <span class="text-slate-500">Đích:</span>
+                      <span id="targetSocLabel" class="text-emerald-600">80%</span>
+                    </div>
+                    <input type="range" id="targetSocInput" min="10" max="100" value="80" oninput="App.calculateChargingTime()" class="w-full" />
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between text-[11px] text-slate-600 pt-1 border-t border-slate-200/80">
+                  <span>Nạp thêm: <b id="calcKwhNeeded" class="text-slate-800">-- kWh</b></span>
+                  <span>Tổng sạc: <b id="calcTotalMinutes" class="text-slate-800">-- phút</b></span>
+                </div>
+
+                <button onclick="App.applyCalculatedAlarm()" class="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs flex items-center justify-center gap-1.5 transition">
+                  <span>⚡ Hẹn Báo Sớm (<span id="calcRecommendMinutes">-- phút</span>)</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           TRANG 2: YOUTUBE KHÔNG QUẢNG CÁO (CLEAN EMBED & LIVE SEARCH)
+           =================================================================== -->
+      <section class="swipe-page" id="page-1">
+        <div class="w-full h-full grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-0">
+
+          <!-- Trình phát Video chính (8/12) -->
+          <div class="lg:col-span-8 soft-card p-4 sm:p-5 flex flex-col min-h-0">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <i data-lucide="youtube" class="w-5 h-5"></i>
+                </div>
+                <h2 class="font-extrabold text-sm sm:text-base text-slate-900">Trình Phát YouTube Không Quảng Cáo</h2>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2">
+                <span id="ytEngineBadge" class="badge-status badge-success">
+                  <span class="status-dot bg-emerald-500"></span>
+                  <span id="ytEngineBadgeText">Đã bật chặn QC • Đa luồng</span>
+                </span>
+                <select id="ytServerSelect" onchange="App.switchYTPlayerEngine(this.value)" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 outline-none">
+                  <option value="auto">⚡ Tự Động Thông Minh (Chạy 100% mọi nơi)</option>
+                  <option value="dailymotion">🌐 Server 1: Cloud Video HD (Không chặn File/Web)</option>
+                  <option value="direct_stream">📻 Server 2: Luồng Radio & HLS Trực Tiếp (HTML5)</option>
+                  <option value="youtube">▶️ Server 3: YouTube Embed (Dành cho GitHub/Localhost)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Thông báo hướng dẫn nếu đang mở bằng giao thức file:// cục bộ -->
+            <div id="ytFileProtocolNotice" class="hidden mb-2.5 px-3.5 py-2 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex flex-wrap items-center justify-between gap-2">
+              <span>💡 Đang mở trực tiếp từ ổ cứng (`file://`): Hệ thống đã <strong>tự động chuyển sang Luồng Cloud Video HD & Radio HTML5</strong> để phát mượt 100% không bị YouTube chặn! (Muốn nhúng link YouTube gốc trên máy tính, hãy chạy file <code>Chay_Web_App.bat</code>).</span>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="App.loadYTCategory('music')" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold">Phát Nhạc Ngay</button>
+              </div>
+            </div>
+
+            <!-- Khung Video -->
+            <div class="flex-1 min-h-[240px] w-full bg-slate-950 rounded-2xl overflow-hidden shadow-inner border border-slate-200 relative">
+              <iframe
+                id="ytIframe"
+                class="w-full h-full border-0"
+                src="about:blank"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen; web-share"
+                allowfullscreen>
+              </iframe>
+              <video
+                id="ytDirectVideo"
+                controls
+                playsinline
+                class="hidden w-full h-full bg-black">
+              </video>
+              <!-- Giao diện Radio Audio Visualizer khi phát luồng MP3/Icecast trực tiếp -->
+              <div id="ytRadioOverlay" class="hidden absolute inset-0 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex flex-col items-center justify-center p-6 text-center text-white">
+                <div class="w-20 h-20 rounded-full bg-blue-500/20 border-2 border-blue-400/50 flex items-center justify-center mb-4 animate-pulse">
+                  <i data-lucide="radio" class="w-10 h-10 text-blue-400"></i>
+                </div>
+                <div id="ytRadioTitle" class="font-extrabold text-lg sm:text-xl text-white mb-1">Radio Lái Xe Trực Tuyến 24/7</div>
+                <div id="ytRadioSub" class="text-xs sm:text-sm text-blue-200 mb-5">Luồng âm thanh HTML5 trực tiếp • Không quảng cáo • Không bao giờ bị chặn</div>
+                <audio id="ytDirectAudio" controls class="w-full max-w-md rounded-xl"></audio>
+              </div>
+            </div>
+
+            <!-- Thông tin video đang phát -->
+            <div class="mt-3 flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-slate-100">
+              <div class="min-w-0 flex-1">
+                <div id="ytCurrentTitle" class="font-bold text-sm text-slate-800 truncate">
+                  Đang tải trình phát nhạc & video...
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button onclick="App.playCustomYTUrl()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition">
+                  <i data-lucide="link" class="w-3.5 h-3.5"></i>
+                  <span>Dán Link / Tìm Nhanh</span>
+                </button>
+                <button onclick="App.openYTExternal()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs flex items-center gap-1.5 transition">
+                  <span>Mở Tab Gốc</span>
+                  <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tìm kiếm & Danh sách tuyển chọn (4/12) -->
+          <div class="lg:col-span-4 soft-card p-4 sm:p-5 flex flex-col min-h-0">
+            <div class="flex items-center justify-between gap-2 mb-2.5">
+              <span class="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
+                <i data-lucide="search" class="w-4 h-4 text-blue-600"></i>
+                <span>Tìm Video & Nhạc Lái Xe</span>
+              </span>
+              <span id="ytSearchStatusBadge" class="badge-status badge-info">Sẵn sàng</span>
+            </div>
+
+            <div class="flex gap-2 mb-2.5">
+              <input
+                type="text"
+                id="ytSearchInput"
+                placeholder="Gõ tên bài hát, Bolero, Lofi, Vpop, Remix..."
+                onkeydown="if(event.key==='Enter') App.searchYouTube()"
+                class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm font-medium text-slate-800 outline-none focus:border-blue-500"
+              />
+              <button onclick="App.searchYouTube()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shrink-0">
+                Tìm
+              </button>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5 mb-3">
+              <button onclick="App.loadYTCategory('music')" class="px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 font-bold text-xs">🎧 Lofi & Chill</button>
+              <button onclick="App.loadYTCategory('bolero')" class="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 font-semibold text-xs">🎸 Bolero & Acoustic</button>
+              <button onclick="App.loadYTCategory('vpop')" class="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 font-semibold text-xs">🎵 V-Pop & Remix</button>
+              <button onclick="App.loadYTCategory('radio')" class="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 font-bold text-xs">📻 Radio 24/7 (HTML5)</button>
+              <button onclick="App.loadYTCategory('news')" class="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 font-semibold text-xs">📰 Tin Tức</button>
+            </div>
+
+            <div id="ytResultsList" class="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           TRANG 3: TRUYỀN HÌNH TRỰC TUYẾN (CÁC KÊNH VTV & VTVGO)
+           =================================================================== -->
+      <section class="swipe-page" id="page-2">
+        <div class="w-full h-full grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-0">
+
+          <!-- Màn hình Tivi VTV (8/12) -->
+          <div class="lg:col-span-8 soft-card p-4 sm:p-5 flex flex-col min-h-0">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <i data-lucide="tv" class="w-5 h-5"></i>
+                </div>
+                <h2 id="tvCurrentChannelTitle" class="font-extrabold text-sm sm:text-base text-slate-900">VTV1 - Thời Sự & Chính Trị</h2>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2">
+                <span id="tvStreamStatusBadge" class="badge-status badge-success">
+                  <span class="status-dot bg-emerald-500 dot-pulse"></span>
+                  <span id="tvStreamStatusText">Trực tiếp HD</span>
+                </span>
+                <button onclick="App.switchTVMode('hls')" id="btnTvModeHls" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+                  Luồng HLS
+                </button>
+                <button onclick="App.switchTVMode('embed')" id="btnTvModeEmbed" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+                  Cổng Web VTV
+                </button>
+                <button onclick="App.openTVExternal()" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1">
+                  <span>Mở VTVGo gốc</span>
+                  <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Khung phát Tivi -->
+            <div class="flex-1 min-h-[240px] w-full bg-slate-950 rounded-2xl overflow-hidden shadow-inner border border-slate-200 relative">
+              <video id="tvVideoElement" controls autoplay playsinline class="w-full h-full bg-black"></video>
+              <iframe id="tvIframeElement" class="hidden w-full h-full border-0 bg-white" allowfullscreen allow="autoplay; encrypted-media; fullscreen"></iframe>
+            </div>
+
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs text-slate-500">
+                💡 Nếu luồng HLS bị nhà mạng chặn CORS, hãy chọn <strong>"Cổng Web VTV"</strong> hoặc <strong>"Mở VTVGo gốc"</strong>.
+              </span>
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  id="customM3u8Input"
+                  placeholder="Dán link .m3u8 tùy chọn..."
+                  class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1 text-xs font-medium text-slate-800 outline-none w-44"
+                />
+                <button onclick="App.playCustomM3u8()" class="px-3 py-1 rounded-xl bg-slate-800 text-white font-bold text-xs">
+                  Phát M3U8
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Danh sách kênh VTV (4/12) -->
+          <div class="lg:col-span-4 soft-card p-4 sm:p-5 flex flex-col min-h-0">
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <span class="font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
+                <i data-lucide="radio" class="w-4 h-4 text-indigo-600"></i>
+                <span>Danh Sách Kênh VTV</span>
+              </span>
+              <span class="badge-status badge-info">12 Kênh</span>
+            </div>
+
+            <div id="tvChannelGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1 min-h-0 overflow-y-auto pr-1 content-start">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- BOTTOM SWIPE INDICATOR DOTS -->
+  <footer class="bg-white/90 border-t border-slate-200 py-1.5 px-5 flex items-center justify-between text-xs text-slate-500 shrink-0 z-20">
+    <div class="flex items-center gap-1.5">
+      <i data-lucide="hand" class="w-3.5 h-3.5 text-blue-600"></i>
+      <span>Gạt ngang trái / phải để chuyển trang</span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button onclick="App.goToPage(0)" id="dot-0" class="h-2.5 w-8 rounded-full bg-blue-600 transition-all"></button>
+      <button onclick="App.goToPage(1)" id="dot-1" class="h-2.5 w-2.5 rounded-full bg-slate-300 hover:bg-slate-400 transition-all"></button>
+      <button onclick="App.goToPage(2)" id="dot-2" class="h-2.5 w-2.5 rounded-full bg-slate-300 hover:bg-slate-400 transition-all"></button>
+    </div>
+
+    <div class="hidden sm:block font-semibold text-slate-600">
+      12" EV Display Optimized
+    </div>
+  </footer>
+
+  <!-- MODAL CẢNH BÁO ĐẾN GIỜ RÚT SẠC -->
+  <div class="alarm-overlay" id="alarmModal">
+    <div class="bg-white border-2 border-rose-500 rounded-3xl p-8 max-w-lg w-[92%] text-center shadow-2xl">
+      <div class="w-16 h-16 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4">
+        <i data-lucide="bell-ring" class="w-9 h-9"></i>
+      </div>
+      <span class="badge-status badge-error mb-3">
+        <span class="status-dot bg-rose-600 dot-pulse"></span>
+        <span>CẢNH BÁO ĐẾN GIỜ RÚT SẠC</span>
+      </span>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">Đã Đạt Thời Gian Hẹn Sạc!</h2>
+      <p class="text-sm text-slate-600 mb-6 leading-relaxed">
+        Xe điện của bạn sắp sạc đạt mức pin mục tiêu. Hãy kiểm tra và ngắt kết nối súng sạc để tránh phí chiếm chỗ quá giờ tại trụ sạc!
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <button onclick="App.dismissAlarm()" class="px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition">
+          ✅ Đã Rút Sạc (Hoàn Thành)
+        </button>
+        <button onclick="App.snoozeAlarm(5)" class="px-5 py-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-sm transition">
+          💤 Báo lại sau 5 phút
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="lunar.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
